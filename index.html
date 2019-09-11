@@ -1,79 +1,80 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <!-- basic script -->
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser.js"></script>
+  <!-- basic script -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser.js"></script>
 </head>
 <body>
 
-    <script>
-        const colors = [0x8CBEC4, 0x443F4B, 0x794566, 0xAD809C, 0xDABBCB];
+  <script>
+    const colors = [0x8CBEC4, 0x443F4B, 0x794566, 0xAD809C, 0xDABBCB];
 
-        function preload() {
-          this.load.image('drop', 'assets/drop.png');
-          this.load.image('square', 'assets/square.png');
-          this.load.image('platform', 'assets/platform.png');
-          this.load.audio('splash', 'assets/splash.wav');
-          this.load.audio('rain', 'assets/rain.wav');
-      }
+    function preload() {
+      this.load.image('drop', 'assets/drop.png');
+      this.load.image('square', 'assets/square.png');
+      this.load.image('platform', 'assets/platform.png');
+      this.load.audio('splash', 'assets/splash.wav');
+      this.load.audio('rain', 'assets/rain.wav');
+    }
 
-      const gameState = {
-          score: 0,
-          currentColor: Phaser.Math.RND.pick(colors)
-      };
+    const gameState = {
+      active: true,
+      score: 0,
+      currentColor: Phaser.Math.RND.pick(colors)
+    };
 
       // for some reason I can't access the tint, just these strange numbers
       function getTint(num) {
         switch(num) {
-            case 12893836: return 0x8CBEC4;
-            case 4931396: return 0x443F4B;
-            case 6702457: return 0x794566;
-            case 10256557: return 0xAD809C;
-            case 13351898: return 0xDABBCB;
+          case 12893836: return 0x8CBEC4;
+          case 4931396: return 0x443F4B;
+          case 6702457: return 0x794566;
+          case 10256557: return 0xAD809C;
+          case 13351898: return 0xDABBCB;
         }
-    }
+      }
 
-    function create() {
+      function create() {
 
-     gameState.splash = this.sound.add('splash');
-     gameState.rain = this.sound.add('rain');
+       gameState.splash = this.sound.add('splash');
+       gameState.rain = this.sound.add('rain');
 
-     gameState.rain.setLoop(true);
-     gameState.rain.play();
+       gameState.rain.setLoop(true);
+       gameState.rain.play();
 
-     gameState.player = this.physics.add.sprite(225, 450, 'square').setScale(1.5);
-     gameState.player.tint = gameState.currentColor;
-     const platforms = this.physics.add.staticGroup();
+       gameState.player = this.physics.add.sprite(225, 450, 'square').setScale(1.5);
+       gameState.player.tint = gameState.currentColor;
+       const platforms = this.physics.add.staticGroup();
 
-     platforms.create(225, 490, 'platform').setScale(1, .3).refreshBody();
+       platforms.create(225, 490, 'platform').setScale(1, .3).refreshBody();
 
-     gameState.scoreText = this.add.text(195, 480, 'Score: 0', { fontSize: '15px', fill: '#000000' });
+       gameState.scoreText = this.add.text(195, 480, 'Score: 0', { fontSize: '15px', fill: '#000000' });
 
-     gameState.player.setCollideWorldBounds(true);
+       gameState.player.setCollideWorldBounds(true);
 
-     this.physics.add.collider(gameState.player, platforms);
+       this.physics.add.collider(gameState.player, platforms);
 
-     gameState.cursors = this.input.keyboard.createCursorKeys();
+       gameState.cursors = this.input.keyboard.createCursorKeys();
 
-     const drops = this.physics.add.group();
+       const drops = this.physics.add.group();
 
-     function dropGen () {
+       function dropGen () {
         const dropColor = Phaser.Math.RND.pick(colors);
         const xCoord = Math.random() * 450;
         const xVelocity = Phaser.Math.Between(-40, 40);
         drops.create(xCoord, 10, 'drop').setVelocityX(xVelocity).tint = dropColor;
-    }
+      }
 
-    const dropGenLoop = this.time.addEvent({
+      const dropGenLoop = this.time.addEvent({
         delay: 400,
         callback: dropGen,
         callbackScope: this,
         loop: true,
-    });
+      });
 
-    this.physics.add.collider(drops, platforms, function (drop) {
+      this.physics.add.collider(drops, platforms, function (drop) {
         drop.destroy();
-    })
+      })
 
         // player unused as callback param, but workaround
         this.physics.add.overlap(gameState.player, drops, (player, drop) => {
@@ -89,65 +90,68 @@
               // next color
               gameState.currentColor = Phaser.Math.RND.pick(colors);
               gameState.player.tint = gameState.currentColor;
-          }
+            }
           else { // wrong
 
             this.tweens.add({
-                targets:  gameState.rain,
-                volume:   0,
-                duration: 600,
+              targets:  gameState.rain,
+              volume:   0,
+              duration: 600,
             });
-           dropGenLoop.destroy();
-           this.physics.pause();
-           this.add.text(180, 250, 'Game Over', { fontSize: '15px', fill: '#000000' });
-           this.add.text(152, 270, 'Click to Restart', { fontSize: '15px', fill: '#000000' });
+            dropGenLoop.destroy();
+            this.physics.pause();
+            gameState.active = false;
+            this.add.text(180, 250, 'Game Over', { fontSize: '15px', fill: '#000000' });
+            this.add.text(152, 270, 'Space to Restart', { fontSize: '15px', fill: '#000000' });
+      }
+    });
+      }
 
-           this.input.on('pointerup', () =>{
-            gameState.score = 0;
-            this.scene.restart();
-        });
+      function update() {
+        if (!gameState.active) {
+         if (gameState.cursors.space.isDown) {
+           gameState.score = 0;
+           gameState.active;
+           this.scene.restart();
+         }
        }
-   });
-    }
 
-    function update() {
-      if (gameState.cursors.left.isDown) {
+
+       if (gameState.cursors.left.isDown) {
         gameState.player.setVelocityX(-160);
-    } else if (gameState.cursors.right.isDown) {
+      } else if (gameState.cursors.right.isDown) {
         gameState.player.setVelocityX(160);
-    } else if (gameState.cursors.space.isDown) {
-        gameState.player.setVelocityY(-50);
-    } 
-    else {
+      } 
+      else {
         gameState.player.setVelocityX(0);
+      }
     }
-}
 
-const config = {
-  type: Phaser.AUTO,
-  width: 450,
-  height: 500,
-  backgroundColor: "D9DCE7",
-  physics: {
-    default: 'arcade',
-    arcade: {
-      gravity: { y: 300 },
-      enableBody: true,
-  }
-},
-scene: {
-    preload,
-    create,
-    update
-}
-};
+    const config = {
+      type: Phaser.AUTO,
+      width: 450,
+      height: 500,
+      backgroundColor: "D9DCE7",
+      physics: {
+        default: 'arcade',
+        arcade: {
+          gravity: { y: 300 },
+          enableBody: true,
+        }
+      },
+      scene: {
+        preload,
+        create,
+        update
+      }
+    };
 
-const game = new Phaser.Game(config);
-
+    const game = new Phaser.Game(config);
 
 
 
-</script>
+
+  </script>
 
 </body>
 </html>
