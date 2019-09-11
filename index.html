@@ -111,7 +111,7 @@
         if (!gameState.active) {
          if (gameState.cursors.space.isDown) {
            gameState.score = 0;
-           gameState.active;
+           gameState.active = true;
            this.scene.restart();
          }
        }
