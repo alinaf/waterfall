@@ -13,6 +13,8 @@
           this.load.image('drop', 'assets/drop.png');
           this.load.image('square', 'assets/square.png');
           this.load.image('platform', 'assets/platform.png');
+          this.load.audio('splash', 'assets/splash.wav');
+          this.load.audio('rain', 'assets/rain.wav');
       }
 
       const gameState = {
@@ -29,47 +31,52 @@
             case 10256557: return 0xAD809C;
             case 13351898: return 0xDABBCB;
         }
-      }
+    }
 
-      function create() {
+    function create() {
 
-          gameState.player = this.physics.add.sprite(225, 450, 'square');
-          gameState.player.tint = gameState.currentColor;
-          const platforms = this.physics.add.staticGroup();
+       gameState.splash = this.sound.add('splash');
+       gameState.rain = this.sound.add('rain');
+       gameState.rain.play();
 
-          platforms.create(225, 490, 'platform').setScale(1, .3).refreshBody();
+       gameState.player = this.physics.add.sprite(225, 450, 'square');
+       gameState.player.tint = gameState.currentColor;
+       const platforms = this.physics.add.staticGroup();
 
-          gameState.scoreText = this.add.text(195, 485, 'Score: 0', { fontSize: '15px', fill: '#000000' });
+       platforms.create(225, 490, 'platform').setScale(1, .3).refreshBody();
 
-          gameState.player.setCollideWorldBounds(true);
+       gameState.scoreText = this.add.text(195, 485, 'Score: 0', { fontSize: '15px', fill: '#000000' });
 
-          this.physics.add.collider(gameState.player, platforms);
+       gameState.player.setCollideWorldBounds(true);
 
-          gameState.cursors = this.input.keyboard.createCursorKeys();
+       this.physics.add.collider(gameState.player, platforms);
 
-          const drops = this.physics.add.group();
+       gameState.cursors = this.input.keyboard.createCursorKeys();
 
-          function dropGen () {
-            const dropColor = Phaser.Math.RND.pick(colors);
-            const xCoord = Math.random() * 450;
-            drops.create(xCoord, 10, 'drop').tint = dropColor;
-        }
+       const drops = this.physics.add.group();
 
-        const dropGenLoop = this.time.addEvent({
-            delay: 500,
-            callback: dropGen,
-            callbackScope: this,
-            loop: true,
-        });
+       function dropGen () {
+        const dropColor = Phaser.Math.RND.pick(colors);
+        const xCoord = Math.random() * 450;
+        drops.create(xCoord, 10, 'drop').tint = dropColor;
+    }
 
-        this.physics.add.collider(drops, platforms, function (drop) {
-            drop.destroy();
-        })
+    const dropGenLoop = this.time.addEvent({
+        delay: 500,
+        callback: dropGen,
+        callbackScope: this,
+        loop: true,
+    });
+
+    this.physics.add.collider(drops, platforms, function (drop) {
+        drop.destroy();
+    })
 
         // player unused as callback param, but workaround
         this.physics.add.overlap(gameState.player, drops, (player, drop) => {
             if (getTint(drop.tintBottomLeft) == gameState.currentColor) { // right
              // play noise
+              gameState.splash.play();
 
               // update
               drop.destroy();
@@ -87,9 +94,9 @@
             this.add.text(152, 270, 'Click to Restart', { fontSize: '15px', fill: '#000000' });
 
             this.input.on('pointerup', () =>{
-            gameState.score = 0;
-            this.scene.restart();
-          });
+                gameState.score = 0;
+                this.scene.restart();
+            });
         }
     });
     }
@@ -99,7 +106,7 @@
         gameState.player.setVelocityX(-160);
     } else if (gameState.cursors.right.isDown) {
         gameState.player.setVelocityX(160);
-    } else if (gameState.cursors.up.isDown) {
+    } else if (gameState.cursors.space.isDown) {
         gameState.player.setVelocityY(-50);
     } 
     else {
@@ -115,7 +122,7 @@ const config = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 200 },
+      gravity: { y: 300 },
       enableBody: true,
   }
 },
