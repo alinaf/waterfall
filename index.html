@@ -35,27 +35,30 @@
 
     function create() {
 
-       gameState.splash = this.sound.add('splash');
-       gameState.rain = this.sound.add('rain');
-       gameState.rain.play();
+     gameState.splash = this.sound.add('splash');
+     gameState.rain = this.sound.add('rain');
 
-       gameState.player = this.physics.add.sprite(225, 450, 'square');
-       gameState.player.tint = gameState.currentColor;
-       const platforms = this.physics.add.staticGroup();
+     gameState.rain.setLoop(true);
+     gameState.rain.play();
 
-       platforms.create(225, 490, 'platform').setScale(1, .3).refreshBody();
 
-       gameState.scoreText = this.add.text(195, 485, 'Score: 0', { fontSize: '15px', fill: '#000000' });
+     gameState.player = this.physics.add.sprite(225, 450, 'square');
+     gameState.player.tint = gameState.currentColor;
+     const platforms = this.physics.add.staticGroup();
 
-       gameState.player.setCollideWorldBounds(true);
+     platforms.create(225, 490, 'platform').setScale(1, .3).refreshBody();
 
-       this.physics.add.collider(gameState.player, platforms);
+     gameState.scoreText = this.add.text(195, 485, 'Score: 0', { fontSize: '15px', fill: '#000000' });
 
-       gameState.cursors = this.input.keyboard.createCursorKeys();
+     gameState.player.setCollideWorldBounds(true);
 
-       const drops = this.physics.add.group();
+     this.physics.add.collider(gameState.player, platforms);
 
-       function dropGen () {
+     gameState.cursors = this.input.keyboard.createCursorKeys();
+
+     const drops = this.physics.add.group();
+
+     function dropGen () {
         const dropColor = Phaser.Math.RND.pick(colors);
         const xCoord = Math.random() * 450;
         drops.create(xCoord, 10, 'drop').tint = dropColor;
@@ -76,7 +79,7 @@
         this.physics.add.overlap(gameState.player, drops, (player, drop) => {
             if (getTint(drop.tintBottomLeft) == gameState.currentColor) { // right
              // play noise
-              gameState.splash.play();
+             gameState.splash.play();
 
               // update
               drop.destroy();
@@ -88,17 +91,24 @@
               gameState.player.tint = gameState.currentColor;
           }
           else { // wrong
-            dropGenLoop.destroy();
-            this.physics.pause();
-            this.add.text(180, 250, 'Game Over', { fontSize: '15px', fill: '#000000' });
-            this.add.text(152, 270, 'Click to Restart', { fontSize: '15px', fill: '#000000' });
 
-            this.input.on('pointerup', () =>{
-                gameState.score = 0;
-                this.scene.restart();
+            this.tweens.add({
+                targets:  gameState.rain,
+                volume:   0,
+                duration: 700,
             });
-        }
-    });
+           // gameState.rain.pause();
+           dropGenLoop.destroy();
+           this.physics.pause();
+           this.add.text(180, 250, 'Game Over', { fontSize: '15px', fill: '#000000' });
+           this.add.text(152, 270, 'Click to Restart', { fontSize: '15px', fill: '#000000' });
+
+           this.input.on('pointerup', () =>{
+            gameState.score = 0;
+            this.scene.restart();
+        });
+       }
+   });
     }
 
     function update() {
