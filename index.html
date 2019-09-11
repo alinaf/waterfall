@@ -17,13 +17,24 @@
 
       const gameState = {
           score: 0,
-          currentColorIndex: 0,
+          currentColor: Phaser.Math.RND.pick(colors)
       };
+
+      // for some reason I can't access the tint, just these strange numbers
+      function getTint(num) {
+        switch(num) {
+            case 12893836: return 0x8CBEC4;
+            case 4931396: return 0x443F4B;
+            case 6702457: return 0x794566;
+            case 10256557: return 0xAD809C;
+            case 13351898: return 0xDABBCB;
+        }
+      }
 
       function create() {
 
           gameState.player = this.physics.add.sprite(225, 450, 'square');
-          gameState.player.tint = colors[gameState.currentColorIndex];
+          gameState.player.tint = gameState.currentColor;
           const platforms = this.physics.add.staticGroup();
 
           platforms.create(225, 490, 'platform').setScale(1, .3).refreshBody();
@@ -45,7 +56,7 @@
         }
 
         const dropGenLoop = this.time.addEvent({
-            delay: 400,
+            delay: 500,
             callback: dropGen,
             callbackScope: this,
             loop: true,
@@ -55,12 +66,21 @@
             drop.destroy();
         })
 
-        this.physics.add.collider(gameState.player, drops, () => {
-            if (true) {
+        // player unused as callback param, but workaround
+        this.physics.add.overlap(gameState.player, drops, (player, drop) => {
+            if (getTint(drop.tintBottomLeft) == gameState.currentColor) { // right
+             // play noise
+
+              // update
+              drop.destroy();
               gameState.score += 10;
               gameState.scoreText.setText(`Score: ${gameState.score}`); 
+
+              // next color
+              gameState.currentColor = Phaser.Math.RND.pick(colors);
+              gameState.player.tint = gameState.currentColor;
           }
-          else {
+          else { // wrong
             dropGenLoop.destroy();
             this.physics.pause();
             this.add.text(180, 250, 'Game Over', { fontSize: '15px', fill: '#000000' });
