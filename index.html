@@ -7,7 +7,30 @@
 <body>
 
   <script>
-    const colors = [0x8CBEC4, 0x443F4B, 0x794566, 0xAD809C, 0xDABBCB];
+    const colors = [0x8CBEC4, 0x443F4B, 0xAD809C, 0xDABBCB];
+
+    function setRelaxMode() {
+      console.log('relax');
+      gameState.delay = 900;
+      gameState.dropVelocity = -100;
+      gameState.playerVelocity = 160;
+
+
+    }
+
+    function setNormalMode() {
+      console.log('normal');
+      gameState.delay = 400;
+      gameState.dropVelocity = 0;
+      gameState.playerVelocity = 160;
+    }
+
+    function setIntenseMode() {
+      console.log('intense');
+      gameState.delay = 200;
+      gameState.dropVelocity = 200;
+      gameState.playerVelocity = 400;
+    }
 
     function preload() {
       this.load.image('drop', 'assets/drop.png');
@@ -15,12 +38,18 @@
       this.load.image('platform', 'assets/platform.png');
       this.load.audio('splash', 'assets/splash.wav');
       this.load.audio('rain', 'assets/rain.wav');
+      this.load.image('easy', 'assets/easy.png');
+      this.load.image('normal', 'assets/normal.png');
+      this.load.image('hard', 'assets/hard.png');
     }
 
     const gameState = {
       active: true,
       score: 0,
-      currentColor: Phaser.Math.RND.pick(colors)
+      currentColor: Phaser.Math.RND.pick(colors),
+      delay: 400,
+      dropVelocity: 0,
+      playerVelocity: 160,
     };
 
       // for some reason I can't access the tint, just these strange numbers
@@ -28,13 +57,31 @@
         switch(num) {
           case 12893836: return 0x8CBEC4;
           case 4931396: return 0x443F4B;
-          case 6702457: return 0x794566;
           case 10256557: return 0xAD809C;
           case 13351898: return 0xDABBCB;
         }
       }
 
       function create() {
+
+       const sprinkle = this.add.sprite(70, 20, 'easy');
+       const rain = this.add.sprite(220, 20, 'normal');
+       const storm = this.add.sprite(370, 20, 'hard');
+       sprinkle.setInteractive();
+       rain.setInteractive();
+       storm.setInteractive();
+
+       sprinkle.on('pointerup', function() {
+        setRelaxMode();
+      });
+
+       rain.on('pointerup', function() {
+        setNormalMode();
+      });
+
+       storm.on('pointerup', function() {
+        setIntenseMode();
+      });
 
        gameState.splash = this.sound.add('splash');
        gameState.rain = this.sound.add('rain');
@@ -62,11 +109,11 @@
         const dropColor = Phaser.Math.RND.pick(colors);
         const xCoord = Math.random() * 450;
         const xVelocity = Phaser.Math.Between(-40, 40);
-        drops.create(xCoord, 10, 'drop').setVelocityX(xVelocity).tint = dropColor;
+        drops.create(xCoord, 40, 'drop').setVelocityX(xVelocity).setVelocityY(gameState.dropVelocity).tint = dropColor;
       }
 
       const dropGenLoop = this.time.addEvent({
-        delay: 400,
+        delay: gameState.delay,
         callback: dropGen,
         callbackScope: this,
         loop: true,
@@ -103,8 +150,8 @@
             gameState.active = false;
             this.add.text(180, 250, 'Game Over', { fontSize: '15px', fill: '#000000' });
             this.add.text(152, 270, 'Space to Restart', { fontSize: '15px', fill: '#000000' });
-      }
-    });
+          }
+        });
       }
 
       function update() {
@@ -118,9 +165,9 @@
 
 
        if (gameState.cursors.left.isDown) {
-        gameState.player.setVelocityX(-160);
+        gameState.player.setVelocityX(gameState.playerVelocity * -1);
       } else if (gameState.cursors.right.isDown) {
-        gameState.player.setVelocityX(160);
+        gameState.player.setVelocityX(gameState.playerVelocity);
       } 
       else {
         gameState.player.setVelocityX(0);
@@ -147,8 +194,6 @@
     };
 
     const game = new Phaser.Game(config);
-
-
 
 
   </script>
